@@ -28,57 +28,24 @@ public class TicketBookingService implements ActionListener, MouseListener {
       JButton button = (JButton) source;
       String name = button.getName();
       switch (name) {
-        case "add-movie": {
-          TicketBookingViewClient.showAddMovieDialog();
+        case "refresh-list": {
+          // Làm mới danh sách phim đã hiển thị ở table.
           break;
         }
-        case "save-movie": {
-          // Lấy thông tin từ AreaForm rồi lưu xuống Repo.
-          // Thông tin ngày chiếu.
-          Date releaseDate = TicketBookingViewClient.getDateChooser().getDate();
-          // Thông tin tên phim.
-          String title = TicketBookingViewClient.getMovieName();
-          List<Area> areas = new ArrayList<>();
-
-          // Giá vé vị trí thường.
-
-          // Giá vé vị trí vip.
-
-          // Thông tin danh sách rạp.
-          List<Component> list = TicketBookingViewClient.getListArea();
-          for (Component area : list) {
-            if (area instanceof AreaForm areaForm) {
-              if (areaForm.getArea().getShowTime() == null) {
-                return;
-              }
-              areas.add(areaForm.getArea());
-            }
-          }
-
-          Movie movie = new Movie(areas, releaseDate, title);
-          repo.addMovie(movie);
-          TicketBookingViewClient.getDialogInstance().dispose();
-
-          // Sau khi thêm phim thành công, thoát dialog và hiển thị phim vào table chứa danh sách phim.
-          TicketBookingViewClient.showMovieTable(repo.getLastMovie());
+        case "book": {
+          TicketBookingViewClient.showBookingForm();
           break;
         }
-        case "start-server": {
-          JTextField portString = TicketBookingViewClient.getPortField();
-          int portNumber = Integer.parseInt(portString.getText());
-          TicketBookingViewClient.startServer(portNumber);
-          break;
-        }
-        case "close-server": {
-          TicketBookingViewClient.closeServer();
+        case "connect": {
+          System.out.println("Connect button clicked!");
           break;
         }
         case "disconnect": {
           System.out.println("Disconnect button clicked!");
           break;
         }
-        case "detail": {
-          System.out.println("Detail button clicked!");
+        case "submit": {
+          System.out.println("Submit button clicked!");
           break;
         }
       }

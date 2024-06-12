@@ -3,6 +3,7 @@ package view;
 import com.toedter.calendar.JDateChooser;
 import components.AreaForm;
 import components.CinemaPanel;
+import config.FONT;
 import model.Area;
 import model.Movie;
 import server.Server;
@@ -12,6 +13,10 @@ import utils.ConverDateToString;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Style;
+import javax.swing.text.StyleConstants;
+import javax.swing.text.StyledDocument;
 import java.awt.*;
 import java.util.Arrays;
 import java.util.Date;
@@ -27,7 +32,9 @@ public class TicketBookingViewClient extends JFrame {
   private static final JTextField nameField = new JTextField(30);
   ;
   private static JTable table;
-  private static JDateChooser dateChooser = new JDateChooser(new Date());
+  private static final JTextField customerNameField = new JTextField(20);
+  private static final JTextField phoneNumberField = new JTextField(20);
+  private static final JTextField emailField = new JTextField(20);
   private static final JComboBox<Integer> areasComboBox = new JComboBox<>();
   private static JDialog addMovieDialog;
   private static DefaultTableModel model;
@@ -35,6 +42,8 @@ public class TicketBookingViewClient extends JFrame {
   private static final JTextField portField = new JTextField(20);
   private static Thread serverThread;
   private static Server server;
+  private static final JTextField addressField = new JTextField(20);
+  private static final JTextField content = new JTextField(20);
 
   public TicketBookingViewClient() {
     setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -78,19 +87,30 @@ public class TicketBookingViewClient extends JFrame {
     /* TẠO PHẦN PANEL PHÍA DƯỚI(PANEL LỚN NHẤT) BAO GỒM BÊN TRÁI LÀ DANH SÁCH CÁC PHIM CỦA HỆ THỐNG VÀ THÔNG TIN ĐẶT GHẾ - BÊN PHẢI CHỨA PHẦN RẠP PHIM CỦA PHIM ĐƯỢC CHỌN. */
     JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 30, 0));
     bottomPanel.setSize(new Dimension(1500, 600));
+    dashboardPane.add(bottomPanel);
 
     // Phần phía bên trái sẽ bao gồm button để REFRESH danh sách phim, bảng chứa danh sách phim đã thêm và thông tin ghế đã chọn bao gồm cả tổng chi phí lẫn voucher.
-    JPanel addMoviePanel = new JPanel();
-    addMoviePanel.setSize(new Dimension(600, 450));
-    addMoviePanel.setLayout(new BoxLayout(addMoviePanel, BoxLayout.Y_AXIS));
+    JPanel listMovieAddedAndBookingSeat = new JPanel();
+    listMovieAddedAndBookingSeat.setLayout(new BoxLayout(listMovieAddedAndBookingSeat, BoxLayout.Y_AXIS));
+    listMovieAddedAndBookingSeat.setPreferredSize(new Dimension(600, 500));
+    bottomPanel.add(listMovieAddedAndBookingSeat);
 
-    //
+    // Phần bên trên của listMovieAddedAndBookingSeat sẽ chứa button và table.
+    JPanel listMovieAdded = new JPanel();
+    listMovieAdded.setLayout(new BoxLayout(listMovieAdded, BoxLayout.Y_AXIS));
+    listMovieAdded.setPreferredSize(new Dimension(600, 300));
 
-    // Button Thêm phim mới.
-    JButton addMovieButton = new JButton("Thêm phim mới");
-    addMovieButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
-    addMovieButton.setName("add-movie");
+
+    // Tạo JPanel chứa button "Làm mới danh sách".
+    JPanel _buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEADING, 5, 0));
+    _buttonPanel.setPreferredSize(new Dimension(600, 30));
+    JButton addMovieButton = new JButton("Làm mới danh sách");
     addMovieButton.addActionListener(service);
+    addMovieButton.setName("refresh-list");
+    addMovieButton.addActionListener(service);
+    addMovieButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+    _buttonPanel.add(addMovieButton);
+    listMovieAdded.add(_buttonPanel);
 
     // Tạo dữ liệu cho table lưu danh sách các phim được tạo bởi hệ thống.
     model = new DefaultTableModel();
@@ -100,14 +120,86 @@ public class TicketBookingViewClient extends JFrame {
     model.addColumn("Ngày chiếu");
     table = new JTable(model);
     JScrollPane tableScrollPane = new JScrollPane(table);
-    tableScrollPane.setSize(new Dimension(600, 450));
+    tableScrollPane.setSize(new Dimension(600, 250));
     tableScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
     table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    table.setPreferredScrollableViewportSize(new Dimension(600, 450));
+    table.setPreferredScrollableViewportSize(new Dimension(600, 250));
+    table.setName("list-movie");
     table.addMouseListener(service);
+    listMovieAdded.add(tableScrollPane);
 
-    addMoviePanel.add(addMovieButton);
-    addMoviePanel.add(tableScrollPane);
+    // Tiếp theo sẽ tạo JPanel phía dưới chứa thông tin ghế đã lựa chọn, chi phí.
+    // Panel sẽ chia thành 2 bên, trái chứa danh sách và thông tin vé, phải chứa Tổng tiền, thành Voucher và tổng tiền.
+    JPanel bookingSeat = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
+    bookingSeat.setPreferredSize(new Dimension(600, 200));
+
+    JPanel leftBookingSeat = new JPanel();
+    leftBookingSeat.setLayout(new BoxLayout(leftBookingSeat,BoxLayout.Y_AXIS));
+    leftBookingSeat.setPreferredSize(new Dimension(300, 200));
+    leftBookingSeat.add(new JLabel("Danh sách đã chọn"));
+
+    DefaultTableModel selectedModel = new DefaultTableModel();
+    selectedModel.addColumn("Tên Rạp");
+    selectedModel.addColumn("Vị trí");
+    selectedModel.addColumn("Hạng ghế");
+    selectedModel.addColumn("Giá ghế");
+    JTable selectedSeatTable = new JTable(selectedModel);
+    selectedSeatTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    selectedSeatTable.setPreferredScrollableViewportSize(new Dimension(300, 150));
+    selectedSeatTable.addMouseListener(service);
+    selectedSeatTable.setName("selected-seat");
+    JScrollPane selectedTableScrollPane = new JScrollPane(selectedSeatTable);
+    selectedTableScrollPane.setPreferredSize(new Dimension(300, 150));
+    selectedTableScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+    leftBookingSeat.add(selectedTableScrollPane);
+    bookingSeat.add(leftBookingSeat);
+
+
+    JPanel rightBookingSeat = new JPanel(new GridBagLayout());
+    rightBookingSeat.setPreferredSize(new Dimension(270, 200));
+    GridBagConstraints _gbc = new GridBagConstraints();
+    _gbc.fill = GridBagConstraints.HORIZONTAL;
+    _gbc.insets = new Insets(5, 5, 5, 5);
+
+    _gbc.gridx = 0;
+    _gbc.gridy = 0;
+    _gbc.gridwidth = 1;
+    rightBookingSeat.add(new JLabel("Tổng tiền: "), _gbc);
+    _gbc.gridx = 1;
+    _gbc.gridy = 0;
+    _gbc.gridwidth = 3;
+    rightBookingSeat.add(new JLabel("580000"), _gbc);
+
+    _gbc.gridx = 0;
+    _gbc.gridy = 1;
+    _gbc.gridwidth = 1;
+    rightBookingSeat.add(new JLabel("Voucher: "), _gbc);
+    _gbc.gridx = 1;
+    _gbc.gridy = 1;
+    _gbc.gridwidth = 3;
+    rightBookingSeat.add(new JComboBox<>(new String[]{"5%", "100K"}), _gbc);
+
+    _gbc.gridx = 0;
+    _gbc.gridy = 2;
+    _gbc.gridwidth = 1;
+    rightBookingSeat.add(new JLabel("Thành tiền: "), _gbc);
+    _gbc.gridx = 1;
+    _gbc.gridy = 2;
+    _gbc.gridwidth = 3;
+    rightBookingSeat.add(new JLabel("480000"), _gbc);
+
+    _gbc.gridx = 0;
+    _gbc.gridy = 3;
+    JButton book = new JButton("Đặt Vé"); book.setCursor(new Cursor(Cursor.HAND_CURSOR));
+    book.addActionListener(service);
+    book.setName("book");
+    rightBookingSeat.add(book);
+
+    bookingSeat.add(rightBookingSeat);
+
+    listMovieAddedAndBookingSeat.add(listMovieAdded);
+    listMovieAddedAndBookingSeat.add(bookingSeat);
+
 
     // Panel phía bên phải bao gồm một CinemaPanel và bên dưới bao gồm thông tin các loại ghế ngồi và trạng thái.
     cinemaPanel = new JPanel(new FlowLayout(FlowLayout.LEADING, 50, 10));
@@ -117,18 +209,15 @@ public class TicketBookingViewClient extends JFrame {
     cinemaScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
     cinemaScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 
-    bottomPanel.add(addMoviePanel);
     bottomPanel.add(cinemaScrollPane);
-    dashboardPane.add(bottomPanel);
 
 
-    // CẤU HÌNH CHO PHẦN SERVER CONFIG. SẼ CHIA THÀNH 2 PHẦN, BÊN TRÁI LÀ THÔNG TIN SERVER VÀ BÊN PHẢI DANH SÁCH CLIENT.
+    // CẤU HÌNH CHO PHẦN QUẢN LÝ KẾT NỐI. SẼ CHIA THÀNH 2 PHẦN, BÊN TRÁI LÀ THÔNG TIN SERVER VÀ BÊN PHẢI MỤC TRÒ CHUYỆN VỚI ADMIN.
 
     // Tạo 2 Panel, config chứa thông tin của server như port... Và panel còn lại chứa thông tin của các client.
     JPanel config = new JPanel();
     JPanel client = new JPanel();
     config.setBackground(Color.CYAN);
-    client.setBackground(Color.YELLOW);
     JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, config, client);
     splitPane.setPreferredSize(new Dimension(1000, 500));
     splitPane.setDividerLocation(1000 / 2);
@@ -137,7 +226,7 @@ public class TicketBookingViewClient extends JFrame {
 
     // Cấu hình cho phần panel config.
     config.setLayout(new BoxLayout(config, BoxLayout.Y_AXIS));
-    config.setPreferredSize(new Dimension(500, 300));
+    config.setPreferredSize(new Dimension(500, 500));
     config.add(new JLabel("Thông tin cấu hình máy chủ"));
     JPanel configPanel = new JPanel(new GridBagLayout());
     GridBagConstraints gbc = new GridBagConstraints();
@@ -146,25 +235,36 @@ public class TicketBookingViewClient extends JFrame {
     gbc.gridx = 0;
     gbc.gridy = 0;
     gbc.gridwidth = 1;
-    configPanel.add(new JLabel("Port Server: "), gbc);
+    configPanel.add(new JLabel("IP Address: "), gbc);
     gbc.gridx = 1;
     gbc.gridy = 0;
     gbc.gridwidth = 1;
-    portField.setText("8080");
-    configPanel.add(portField, gbc);
+    addressField.setText("localhost");
+    configPanel.add(addressField, gbc);
 
     gbc.gridx = 0;
     gbc.gridy = 1;
     gbc.gridwidth = 1;
-    JButton start = new JButton("Start Server");
-    start.setName("start-server");
-    start.addActionListener(service);
-    configPanel.add(start, gbc);
+    configPanel.add(new JLabel("Port Number: "), gbc);
     gbc.gridx = 1;
     gbc.gridy = 1;
     gbc.gridwidth = 1;
-    JButton close = new JButton("Close Server");
-    close.setName("close-server");
+    portField.setText("8080");
+    configPanel.add(portField, gbc);
+
+
+    gbc.gridx = 0;
+    gbc.gridy = 2;
+    gbc.gridwidth = 1;
+    JButton start = new JButton("Start Connect");
+    start.setName("connect");
+    start.addActionListener(service);
+    configPanel.add(start, gbc);
+    gbc.gridx = 1;
+    gbc.gridy = 2;
+    gbc.gridwidth = 1;
+    JButton close = new JButton("Disconnect");
+    close.setName("disconnect");
     close.addActionListener(service);
     configPanel.add(close, gbc);
     config.add(configPanel);
@@ -172,28 +272,55 @@ public class TicketBookingViewClient extends JFrame {
 
     // Cấu hình cho phần panel client
     client.setLayout(new BoxLayout(client, BoxLayout.Y_AXIS));
-    client.setPreferredSize(new Dimension(500, 300));
-    client.add(new JLabel("Thông tin máy khách"));
-    JPanel buttonPanel = new JPanel(new GridBagLayout());
-    GridBagConstraints _gbc = new GridBagConstraints();
-    _gbc.fill = GridBagConstraints.HORIZONTAL;
-    _gbc.insets = new Insets(5, 5, 5, 5);
-    _gbc.gridx = 0;
-    _gbc.gridy = 0;
-    _gbc.gridwidth = 1;
-    JButton disconnect = new JButton("Disconnect");
-    disconnect.setName("disconnect");
-    disconnect.addActionListener(service);
-    buttonPanel.add(disconnect, _gbc);
-    _gbc.gridx = 1;
-    _gbc.gridy = 0;
-    _gbc.gridwidth = 1;
-    JButton refresh = new JButton("Refresh");
-    refresh.setName("refresh");
-    refresh.addActionListener(service);
-    buttonPanel.add(refresh, _gbc);
-    client.add(buttonPanel);
+    client.setPreferredSize(new Dimension(500, 500));
+    client.add(new JLabel("Trò chuyện"));
 
+    JTextPane chatPane = new JTextPane();
+    chatPane.setPreferredSize(new Dimension(400, 400));
+    chatPane.setEditable(false);
+    JScrollPane chatScrollPane = new JScrollPane(chatPane);
+    chatScrollPane.setPreferredSize(new Dimension(400, 400));
+    chatScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+    client.add(chatScrollPane);
+
+    // Để thêm tin nhắn mới với định dạng
+    StyledDocument doc = chatPane.getStyledDocument();
+
+    Style clientStyle = chatPane.addStyle("Client Style", null);
+    StyleConstants.setForeground(clientStyle, Color.BLUE);
+
+    Style serverStyle = chatPane.addStyle("Server Style", null);
+    StyleConstants.setForeground(serverStyle, Color.RED);
+
+    try {
+      doc.insertString(doc.getLength(), "Client: Hello, Server!\n", clientStyle);
+      doc.insertString(doc.getLength(), "Server: Hi, Client!\n", serverStyle);
+      doc.insertString(doc.getLength(), "Client: How are you doing?\n", clientStyle);
+      doc.insertString(doc.getLength(), "Server: I'm doing well, thank you. How about you?\n", serverStyle);
+      doc.insertString(doc.getLength(), "Client: I'm great, thanks for asking.\n", clientStyle);
+      doc.insertString(doc.getLength(), "Server: What can I help you with today?\n", serverStyle);
+      doc.insertString(doc.getLength(), "Client: I have a question about my account.\n", clientStyle);
+      doc.insertString(doc.getLength(), "Server: Sure, what is your question?\n", serverStyle);
+      doc.insertString(doc.getLength(), "Client: Can you help me reset my password?\n", clientStyle);
+      doc.insertString(doc.getLength(), "Server: Absolutely. Please provide your email address.\n", serverStyle);
+      doc.insertString(doc.getLength(), "Client: It's example@example.com\n", clientStyle);
+      doc.insertString(doc.getLength(), "Server: Thank you. I have sent a password reset link to your email.\n", serverStyle);
+      doc.insertString(doc.getLength(), "Client: Great! I received it. What should I do next?\n", clientStyle);
+      doc.insertString(doc.getLength(), "Server: Click the link in the email to reset your password.\n", serverStyle);
+      doc.insertString(doc.getLength(), "Client: Okay, I will do that now. Thank you!\n", clientStyle);
+      doc.insertString(doc.getLength(), "Server: You're welcome. Is there anything else I can assist you with?\n", serverStyle);
+      doc.insertString(doc.getLength(), "Client: No, that's all for now. Have a great day!\n", clientStyle);
+      doc.insertString(doc.getLength(), "Server: You too! Goodbye.\n", serverStyle);
+      doc.insertString(doc.getLength(), "Client: Goodbye.\n", clientStyle);
+    } catch (BadLocationException e) {
+      e.printStackTrace();
+    }
+
+    client.add(content);
+    JButton submit = new JButton("Gửi");
+    submit.setName("submit");
+    submit.addActionListener(service);
+    client.add(submit);
   }
 
 
@@ -206,97 +333,76 @@ public class TicketBookingViewClient extends JFrame {
     cinemaPanel.repaint();
   }
 
-  public static void showAddMovieDialog() {
+  public static void showBookingForm() {
     // Tạo JDialog
     addMovieDialog = new JDialog();
-    addMovieDialog.setSize(500, 700);
+    addMovieDialog.setSize(500, 300);
     addMovieDialog.setLocationRelativeTo(null);
+    addMovieDialog.setVisible(true);
+
+
+    JPanel title = new JPanel(new FlowLayout(FlowLayout.CENTER));
+    JLabel titleLabel = new JLabel("Thông tin đặt vé"); titleLabel.setForeground(new Color(243, 248, 255));
+    titleLabel.setFont(FONT.FONT_ROBOTO_BOLD(20));
+    title.add(titleLabel);  title.setBackground(new Color(2, 131, 145));
 
     JPanel topDialog = new JPanel(new GridBagLayout());
     GridBagConstraints gbc = new GridBagConstraints();
     gbc.fill = GridBagConstraints.HORIZONTAL;
     gbc.insets = new Insets(5, 5, 5, 5);
 
-    // Tạo Panel chứa ngày chiếu.
-    JLabel timeLabel = new JLabel("Ngày chiếu:");
-    dateChooser.setDateFormatString("dd-MM-yyyy");
+    // Tạo Panel chứa tên khách hàng.
+    JLabel nameLabel = new JLabel("Tên khách hàng:");
     gbc.gridx = 0;
     gbc.gridy = 0;
-    gbc.gridwidth = 1;
-    topDialog.add(timeLabel, gbc);
-    gbc.gridx = 1;
-    gbc.gridy = 0;
-    gbc.gridwidth = 3;
-    topDialog.add(dateChooser, gbc);
-
-    // Tạo panel chứa tên phim.
-    JLabel nameLabel = new JLabel("Tên phim:");
-    gbc.gridx = 0;
-    gbc.gridy = 2;
     gbc.gridwidth = 1;
     topDialog.add(nameLabel, gbc);
     gbc.gridx = 1;
+    gbc.gridy = 0;
+    gbc.gridwidth = 3;
+    topDialog.add(customerNameField, gbc);
+
+    // Tạo panel chứa số điện thoại.
+    JLabel phoneLabel = new JLabel("Số điện thoại:");
+    gbc.gridx = 0;
+    gbc.gridy = 2;
+    gbc.gridwidth = 1;
+    topDialog.add(phoneLabel, gbc);
+    gbc.gridx = 1;
     gbc.gridy = 2;
     gbc.gridwidth = 3;
-    topDialog.add(nameField, gbc);
+    topDialog.add(phoneNumberField, gbc);
 
-
-    // Tạo panel cấu hình số lượng rạp chiếu - mỗi rạp sẽ có các thông tin như tên rạp, số hàng, cột và giá cơ bản cho mỗi loại ghế.
-    JLabel topAreasLabel = new JLabel("Số Rạp Chiếu");
+    // Tạo panel chứa số điện thoại.
+    JLabel emailLabel = new JLabel("Email:");
     gbc.gridx = 0;
     gbc.gridy = 3;
     gbc.gridwidth = 1;
-    topDialog.add(topAreasLabel, gbc);
-
-    areasComboBox.setName("area");
-    areasComboBox.addActionListener(new TicketBookingService());
-    areasComboBox.addItem(0);
-    areasComboBox.addItem(1);
-    areasComboBox.addItem(2);
-    areasComboBox.addItem(3);
-    areasComboBox.addItem(4);
-    areasComboBox.addItem(5);
-    areasComboBox.addItem(6);
-    areasComboBox.addItem(7);
-    areasComboBox.addItem(8);
-    areasComboBox.addItem(9);
-    areasComboBox.setCursor(new Cursor(Cursor.HAND_CURSOR));
+    topDialog.add(emailLabel, gbc);
     gbc.gridx = 1;
     gbc.gridy = 3;
     gbc.gridwidth = 3;
-    topDialog.add(areasComboBox, gbc);
+    topDialog.add(emailField, gbc);
 
-    JPanel areas = new JPanel();
-    areas.setLayout(new BoxLayout(areas, BoxLayout.Y_AXIS));
-    areas.setPreferredSize(new Dimension(450, 450));
+    // Tạo 2 button là Xác nhận và Huỷ. Sẽ style lại sau.
+    JButton cancel = new JButton("Huỷ");  cancel.setCursor(new Cursor(Cursor.HAND_CURSOR));
+    JButton confirm = new JButton("Xác nhận");  confirm.setCursor(new Cursor(Cursor.HAND_CURSOR));
+    gbc.gridx = 0;
+    gbc.gridy = 4;
+    gbc.gridwidth = 1;
+    topDialog.add(cancel, gbc);
+    gbc.gridx = 1;
+    gbc.gridy = 4;
+    gbc.gridwidth = 3;
+    topDialog.add(confirm, gbc);
 
-    centerAreasPanel.setLayout(new BoxLayout(centerAreasPanel, BoxLayout.Y_AXIS));
-    centerAreasPanel.setSize(new Dimension(400, 450));
-
-    JScrollPane centerAreasScrollPane = new JScrollPane(centerAreasPanel);
-    centerAreasScrollPane.setPreferredSize(new Dimension(400, 450));
-    centerAreasScrollPane.setViewportView(centerAreasPanel);
-    centerAreasScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-
-    areas.add(centerAreasScrollPane);
-
-    JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 20));
-    JButton saveButton = new JButton("Lưu");
-    saveButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
-    saveButton.setName("save-movie");
-    saveButton.addActionListener(service);
-    buttonPanel.add(saveButton);
-
-    // Sắp xếp các thành phần giao diện trong dialog
     JPanel dialogPanel = new JPanel();
     dialogPanel.setLayout(new BoxLayout(dialogPanel, BoxLayout.Y_AXIS));
-    dialogPanel.add(topDialog);
-    dialogPanel.add(areas);
-    dialogPanel.add(buttonPanel);
     addMovieDialog.add(dialogPanel);
 
-    // Hiển thị dialog
-    addMovieDialog.setVisible(true);
+    dialogPanel.add(title);
+    dialogPanel.add(topDialog);
+    addMovieDialog.add(dialogPanel);
   }
 
   public static void addListArea(List<AreaForm> list) {
@@ -310,23 +416,6 @@ public class TicketBookingViewClient extends JFrame {
 
   public void showMe() {
     this.setVisible(true);
-  }
-
-  public static JDateChooser getDateChooser() {
-    return dateChooser;
-  }
-
-  public static String getMovieName() {
-    return nameField.getText();
-  }
-
-  public static int getNumsArea() {
-    return Integer.parseInt(areasComboBox.getSelectedItem().toString());
-  }
-
-
-  public static List<Component> getListArea() {
-    return Arrays.stream(centerAreasPanel.getComponents()).toList();
   }
 
   public static void showError(Component component, String message) {
