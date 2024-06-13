@@ -8,24 +8,16 @@ import java.util.Date;
 import java.util.List;
 
 public class TicketBookingRepo {
-  private List<Movie> movies;
-  private int count = 0;
+  private static List<Movie> movies;
 
   public TicketBookingRepo() {
     movies = new ArrayList<>();
   }
 
-  public void addMovie(Movie movie) {
-    count++;
-    movie.setMovieId(count);
+  public static void addMovie(Movie movie) {
     movies.add(movie);
   }
 
-
-  public List<Movie> getMoviesByDate(Date date) {
-    // Tìm movie dựa vào ngày chiếu.
-    return movies.stream().filter(movie -> movie.getReleaseDate().equals(date)).toList();
-  }
 
   public List<Movie> getMovies() {
     return movies.stream().toList();

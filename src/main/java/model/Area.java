@@ -2,10 +2,12 @@ package model;
 
 import config.Pair;
 
+import java.io.Serializable;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 //Rạp chiếu
-public class Area {
+public class Area implements Serializable {
+  private static final long serialVersionUID = 130720L;
   private String showTime;
   private String name;
   private int row;

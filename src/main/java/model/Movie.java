@@ -1,9 +1,11 @@
 package model;
 
+import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
 
-public class Movie {
+public class Movie implements Serializable {
+  private static final long serialVersionUID = 130720L;
   private int movieId;
   private Date releaseDate;
   private String title;

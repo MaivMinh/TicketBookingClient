@@ -1,12 +1,11 @@
 package view;
 
-import com.toedter.calendar.JDateChooser;
+import client.Client;
 import components.AreaForm;
 import components.CinemaPanel;
 import config.FONT;
 import model.Area;
 import model.Movie;
-import server.Server;
 import service.TicketBookingService;
 import utils.ConverDateToString;
 
@@ -18,6 +17,9 @@ import javax.swing.text.Style;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
 import java.awt.*;
+import java.io.IOException;
+import java.net.Socket;
+import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -39,11 +41,10 @@ public class TicketBookingViewClient extends JFrame {
   private static JDialog addMovieDialog;
   private static DefaultTableModel model;
   private static JPanel cinemaPanel;
-  private static final JTextField portField = new JTextField(20);
-  private static Thread serverThread;
-  private static Server server;
-  private static final JTextField addressField = new JTextField(20);
+  public static final JTextField portField = new JTextField(20);
+  public static final JTextField addressField = new JTextField(20);
   private static final JTextField content = new JTextField(20);
+  private static Client client;
 
   public TicketBookingViewClient() {
     setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -134,7 +135,7 @@ public class TicketBookingViewClient extends JFrame {
     bookingSeat.setPreferredSize(new Dimension(600, 200));
 
     JPanel leftBookingSeat = new JPanel();
-    leftBookingSeat.setLayout(new BoxLayout(leftBookingSeat,BoxLayout.Y_AXIS));
+    leftBookingSeat.setLayout(new BoxLayout(leftBookingSeat, BoxLayout.Y_AXIS));
     leftBookingSeat.setPreferredSize(new Dimension(300, 200));
     leftBookingSeat.add(new JLabel("Danh sách đã chọn"));
 
@@ -190,7 +191,8 @@ public class TicketBookingViewClient extends JFrame {
 
     _gbc.gridx = 0;
     _gbc.gridy = 3;
-    JButton book = new JButton("Đặt Vé"); book.setCursor(new Cursor(Cursor.HAND_CURSOR));
+    JButton book = new JButton("Đặt Vé");
+    book.setCursor(new Cursor(Cursor.HAND_CURSOR));
     book.addActionListener(service);
     book.setName("book");
     rightBookingSeat.add(book);
@@ -342,9 +344,11 @@ public class TicketBookingViewClient extends JFrame {
 
 
     JPanel title = new JPanel(new FlowLayout(FlowLayout.CENTER));
-    JLabel titleLabel = new JLabel("Thông tin đặt vé"); titleLabel.setForeground(new Color(243, 248, 255));
+    JLabel titleLabel = new JLabel("Thông tin đặt vé");
+    titleLabel.setForeground(new Color(243, 248, 255));
     titleLabel.setFont(FONT.FONT_ROBOTO_BOLD(20));
-    title.add(titleLabel);  title.setBackground(new Color(2, 131, 145));
+    title.add(titleLabel);
+    title.setBackground(new Color(2, 131, 145));
 
     JPanel topDialog = new JPanel(new GridBagLayout());
     GridBagConstraints gbc = new GridBagConstraints();
@@ -385,8 +389,10 @@ public class TicketBookingViewClient extends JFrame {
     topDialog.add(emailField, gbc);
 
     // Tạo 2 button là Xác nhận và Huỷ. Sẽ style lại sau.
-    JButton cancel = new JButton("Huỷ");  cancel.setCursor(new Cursor(Cursor.HAND_CURSOR));
-    JButton confirm = new JButton("Xác nhận");  confirm.setCursor(new Cursor(Cursor.HAND_CURSOR));
+    JButton cancel = new JButton("Huỷ");
+    cancel.setCursor(new Cursor(Cursor.HAND_CURSOR));
+    JButton confirm = new JButton("Xác nhận");
+    confirm.setCursor(new Cursor(Cursor.HAND_CURSOR));
     gbc.gridx = 0;
     gbc.gridy = 4;
     gbc.gridwidth = 1;
@@ -417,6 +423,7 @@ public class TicketBookingViewClient extends JFrame {
   public void showMe() {
     this.setVisible(true);
   }
+
 
   public static void showError(Component component, String message) {
     if (component == null) {
@@ -457,22 +464,25 @@ public class TicketBookingViewClient extends JFrame {
     table.repaint();
   }
 
-  public static JTextField getPortField() {
-    return portField;
+
+  public static void startClient(String host, int port) {
+    try {
+      Socket socket = new Socket(host, port); // Tạo socket để kết nối tới Server.
+      client = new Client(socket);
+      Thread thread = new Thread(client); //Tạo một thread client để thực hiện nhận dữ liệu từ Server và gửi dữ liệu tới Server.
+      thread.start();
+      showSuccess(null, "Đã kết nối tới Server");
+    } catch (RuntimeException | IOException e) {
+      showError(null, e.getMessage());
+      System.out.println(e.getMessage() + " - TicketBookingClient.startClient()");
+    }
   }
 
-  public static void startServer(int port) {
-    // Truyền vào port và bắt đầu cho Server lắng nghe Client.
-    server = new Server(port);
-    serverThread = new Thread(server);
-    serverThread.start();
+  public static void closeClient() {
+    // Phương thức này sẽ ngắt kết nối đối với Server.
+    client.close();
+    showSuccess(null, "Đóng kết nối thành công!");
   }
-
-  public static void closeServer() {
-    // Đóng kết nối từ Server.
-    server.close();
-  }
-
 
   public static void main(String[] args) {
     try {

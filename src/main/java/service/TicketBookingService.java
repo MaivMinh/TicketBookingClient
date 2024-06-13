@@ -37,11 +37,15 @@ public class TicketBookingService implements ActionListener, MouseListener {
           break;
         }
         case "connect": {
-          System.out.println("Connect button clicked!");
+          //Lấy thông tin host - port.
+          String host = TicketBookingViewClient.addressField.getText();
+          String portString = TicketBookingViewClient.portField.getText();
+          int port = Integer.parseInt(portString);
+          TicketBookingViewClient.startClient(host, port);
           break;
         }
         case "disconnect": {
-          System.out.println("Disconnect button clicked!");
+          TicketBookingViewClient.closeClient();
           break;
         }
         case "submit": {
