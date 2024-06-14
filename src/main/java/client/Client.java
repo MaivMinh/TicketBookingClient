@@ -17,6 +17,7 @@ public class Client implements Runnable {
     // Phương thức này dùng để tạo lập đối tượng Client ở trạng thái New State.
     this.clientSocket = _clientSocket;
     try {
+      this.clientSocket.setKeepAlive(true);
       this.oos = new ObjectOutputStream(clientSocket.getOutputStream());
       this.ois = new ObjectInputStream(clientSocket.getInputStream());
     } catch (IOException e) {
@@ -32,16 +33,14 @@ public class Client implements Runnable {
   public void close() {
     // HÀM NÀY CHỊU TRÁCH NHIỆM CHO VIỆC ĐÓNG KẾT NỐI.
     try {
-      if (clientSocket.isConnected()) {
+      if (!clientSocket.isClosed()) {
         clientSocket.close();
       }
       if (oos != null) {
         oos.close();
-        oos = null;
       }
       if (ois != null) {
         ois.close();
-        ois = null;
       }
     } catch (IOException e) {
       TicketBookingViewClient.showError(null, e.getMessage());
@@ -65,7 +64,7 @@ public class Client implements Runnable {
             }
           }
 
-          while (clientSocket.isConnected()) {
+          while (!clientSocket.isClosed()) {
             Object data = ois.readObject();
             if (data instanceof Movie movie) {
               // Sau khi mà có được movie rồi thì cần phải thêm vào repo.
@@ -74,7 +73,7 @@ public class Client implements Runnable {
             }
           }
         } catch (IOException | ClassNotFoundException exception) {
-          System.out.println(exception.getMessage() + " - Client.listenFromServer()");
+          System.out.println(exception.getMessage() + " - Client.receiveDataFromServer()");
         }
       }
     }).start();

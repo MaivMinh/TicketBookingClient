@@ -57,7 +57,6 @@ public class Seat extends JPanel {
           TicketBookingViewClient.removeSelectedSeat(Seat.this);
         }
         setBorder(border);
-        revalidate();
         repaint();
       }
     });

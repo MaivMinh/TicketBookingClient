@@ -345,7 +345,7 @@ public class TicketBookingViewClient extends JFrame {
         break;
       }
       case "50K": {
-        remain = total - 50;
+        remain = total - 50000;
         break;
       }
       default: {
@@ -377,7 +377,7 @@ public class TicketBookingViewClient extends JFrame {
         break;
       }
       case "50K": {
-        remain = total - 50;
+        remain = total - 50000;
         break;
       }
     }
@@ -406,7 +406,7 @@ public class TicketBookingViewClient extends JFrame {
             break;
           }
           case "50K": {
-            remain = total - 50;
+            remain = total - 50000;
             break;
           }
         }
