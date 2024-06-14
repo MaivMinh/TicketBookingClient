@@ -1,5 +1,6 @@
 package client;
 
+import model.BookingInfo;
 import model.Movie;
 import repository.TicketBookingRepo;
 import view.TicketBookingViewClient;
@@ -25,12 +26,20 @@ public class Client implements Runnable {
     }
   }
 
-  public void sendDataToServer() {
+  public void sendDataToServer(BookingInfo infor) {
     // HÀM NÀY CHỊU TRÁCH NHIỆM CHO VIỆC GỬI DỮ LIỆU CHO SERVER.
-
+    try {
+      if (!clientSocket.isClosed() && oos != null) {
+        oos.writeObject(infor);
+        oos.flush();
+      }
+    } catch (IOException e)  {
+      System.out.println(e.getMessage() + " - Client.sendDataToServer()");
+      closeAll();
+    }
   }
 
-  public void close() {
+  public void closeAll() {
     // HÀM NÀY CHỊU TRÁCH NHIỆM CHO VIỆC ĐÓNG KẾT NỐI.
     try {
       if (!clientSocket.isClosed()) {
@@ -44,7 +53,7 @@ public class Client implements Runnable {
       }
     } catch (IOException e) {
       TicketBookingViewClient.showError(null, e.getMessage());
-      System.out.println(e.getMessage() + " - Client.close()");
+      System.out.println(e.getMessage() + " - Client.closeAll()");
     }
   }
 

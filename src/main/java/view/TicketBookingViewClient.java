@@ -6,6 +6,7 @@ import components.CinemaPanel;
 import components.Seat;
 import config.FONT;
 import model.Area;
+import model.BookingInfo;
 import model.Movie;
 import service.TicketBookingService;
 import utils.ConverDateToString;
@@ -356,6 +357,10 @@ public class TicketBookingViewClient extends JFrame {
     remainFee.setText(String.valueOf(remain));
   }
 
+  public static void closeBookingForm() {
+    addMovieDialog.dispose();
+  }
+
   public static void showSelectedSeat(Seat seat) {
     // Hàm giúp hiển thị ghế vừa chọn vào bảng.
     String seatPosition = seat.detectCharacter(seat.getRow()) + "" + seat.getCol();
@@ -446,13 +451,24 @@ public class TicketBookingViewClient extends JFrame {
     cinemaPanel.repaint();
   }
 
+  public static JTextField getCustomerNameField() {
+    return customerNameField;
+  }
+
+  public static JTextField getPhoneNumberField() {
+    return phoneNumberField;
+  }
+
+  public static JTextField getEmailField() {
+    return emailField;
+  }
+
   public static void showBookingForm() {
     // Tạo JDialog
     addMovieDialog = new JDialog();
     addMovieDialog.setSize(500, 300);
     addMovieDialog.setLocationRelativeTo(null);
     addMovieDialog.setVisible(true);
-
 
     JPanel title = new JPanel(new FlowLayout(FlowLayout.CENTER));
     JLabel titleLabel = new JLabel("Thông tin đặt vé");
@@ -501,9 +517,13 @@ public class TicketBookingViewClient extends JFrame {
 
     // Tạo 2 button là Xác nhận và Huỷ. Sẽ style lại sau.
     JButton cancel = new JButton("Huỷ");
+    cancel.setName("cancel-booking");
+    cancel.addActionListener(service);
     cancel.setCursor(new Cursor(Cursor.HAND_CURSOR));
     JButton confirm = new JButton("Xác nhận");
     confirm.setCursor(new Cursor(Cursor.HAND_CURSOR));
+    confirm.setName("confirm-booking");
+    confirm.addActionListener(service);
     gbc.gridx = 0;
     gbc.gridy = 4;
     gbc.gridwidth = 1;
@@ -518,6 +538,12 @@ public class TicketBookingViewClient extends JFrame {
     addMovieDialog.add(dialogPanel);
 
     dialogPanel.add(title);
+    JPanel notifyPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 10));
+    JLabel notify = new JLabel("Thông tin thanh toán sẽ được gửi tới email quý khách!");
+    notify.setForeground(new Color(252, 81, 133));
+    notify.setFont(FONT.FONT_ROBOTO_ITALIC(16));
+    notifyPanel.add(notify);
+    dialogPanel.add(notifyPanel);
     dialogPanel.add(topDialog);
     addMovieDialog.add(dialogPanel);
   }
@@ -596,9 +622,14 @@ public class TicketBookingViewClient extends JFrame {
     }
   }
 
+  public static void sendDataToServer(BookingInfo infor) {
+    client.sendDataToServer(infor);
+    closeBookingForm();
+  }
+
   public static void closeClient() {
     // Phương thức này sẽ ngắt kết nối đối với Server.
-    client.close();
+    client.closeAll();
     showSuccess(null, "Đóng kết nối thành công!");
   }
 

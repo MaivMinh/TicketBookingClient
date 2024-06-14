@@ -1,13 +1,17 @@
 package service;
 
+import client.Client;
 import components.AreaForm;
 import components.TimePicker;
 import model.Area;
+import model.BookingInfo;
 import model.Movie;
+import model.SeatSelected;
 import repository.TicketBookingRepo;
 import view.TicketBookingViewClient;
 
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -46,6 +50,27 @@ public class TicketBookingService implements ActionListener, MouseListener {
         }
         case "disconnect": {
           TicketBookingViewClient.closeClient();
+          break;
+        }
+        case "cancel-booking": {
+          TicketBookingViewClient.closeBookingForm();
+          break;
+        }
+        case "confirm-booking": {
+          String clientName = TicketBookingViewClient.getCustomerNameField().getText();
+          String clientPhoneNumber = TicketBookingViewClient.getPhoneNumberField().getText();
+          String clientEmail = TicketBookingViewClient.getEmailField().getText();
+          DefaultTableModel model = TicketBookingViewClient.getSelectedSeatModel();
+          List<SeatSelected> list = new ArrayList<>();
+          for (int i = 0; i < model.getRowCount(); i++) {
+            Integer idMovie = (Integer) model.getValueAt(i, 0);
+            String areaName = (String) model.getValueAt(i, 1);
+            String position = (String) model.getValueAt(i, 2);
+            SeatSelected seat = new SeatSelected(idMovie, areaName, position);
+            list.add(seat);
+          }
+          BookingInfo infor = new BookingInfo(clientName, clientPhoneNumber, clientEmail, list);
+          TicketBookingViewClient.sendDataToServer(infor);
           break;
         }
         case "submit": {
