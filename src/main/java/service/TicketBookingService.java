@@ -56,10 +56,10 @@ public class TicketBookingService implements ActionListener, MouseListener {
     } else if (source instanceof JComboBox<?>) {
       JComboBox<String> comboBox = (JComboBox<String>) source;
       String name = comboBox.getName();
-      int data = Integer.parseInt(comboBox.getSelectedItem().toString());
       // Tạo ra Table mới rồi gửi về cho view để view render ra màn hình.
       switch (name) {
         case "show-time": {
+          int data = Integer.parseInt(comboBox.getSelectedItem().toString());
           List<TimePicker> showTimes = new ArrayList<>();
           for (int i = 0; i < data; i++) {
             showTimes.add(new TimePicker());
@@ -68,11 +68,17 @@ public class TicketBookingService implements ActionListener, MouseListener {
           break;
         }
         case "area": {
+          int data = Integer.parseInt(comboBox.getSelectedItem().toString());
           List<AreaForm> areas = new ArrayList<>();
           for (int i = 0; i < data; i++) {
             areas.add(new AreaForm(String.valueOf(i + 1)));
           }
           TicketBookingViewClient.addListArea(areas);
+          break;
+        }
+        case "voucher": {
+          String selected = comboBox.getSelectedItem().toString();
+          TicketBookingViewClient.calculateTicketPrice(selected);
           break;
         }
       }

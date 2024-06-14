@@ -71,8 +71,6 @@ public class Client implements Runnable {
               // Sau khi mà có được movie rồi thì cần phải thêm vào repo.
               TicketBookingRepo.addMovie(movie);
               TicketBookingViewClient.showMovieTable(movie);
-            } else {
-              System.out.println("KHÔNG THUỘC CLASS MOVIE!");
             }
           }
         } catch (IOException | ClassNotFoundException exception) {

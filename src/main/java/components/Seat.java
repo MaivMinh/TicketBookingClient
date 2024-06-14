@@ -29,9 +29,12 @@ public class Seat extends JPanel {
     this.idMovie = idMovie;
     this.areaName = areaName;
     this.type = type;
-    this.status = STATUS.AVAILABLE;
     this.row = _row;
     this.col = _col;
+    this.status = (TicketBookingViewClient.checkIsSelectedSeat(idMovie, areaName, detectCharacter(row) +"" + col) ? STATUS.SELECTED : STATUS.AVAILABLE);
+    if (status == STATUS.SELECTED)  {
+      setBorder(new RoundedBorder(new Color(255, 255, 128), 2, 20, 20));
+    }
     this.price = _price;
     setPreferredSize(new Dimension(20, 20));
     this.setCursor(new Cursor(Cursor.HAND_CURSOR));
@@ -39,23 +42,21 @@ public class Seat extends JPanel {
     addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent e) {
-        System.out.println(idMovie + " - " + areaName + " - " + detectCharacter(row) + col + " - " + price);
         if (status == STATUS.BOOKED)
           return;
         selected = !selected;
+        setStatus(selected ? STATUS.SELECTED : STATUS.AVAILABLE);
         Border border = null;
         if (selected) {
           // Người dùng chọn ghế.
-          setStatus(STATUS.SELECTED);
           border = new RoundedBorder(new Color(255, 255, 128), 2, 20, 20);
-          setBorder(border);
           // Gọi hàm hiển thị ghế vào bảng.
           TicketBookingViewClient.showSelectedSeat(Seat.this);
         } else {
           // Người dùng huỷ chọn ghế.
-          setStatus(STATUS.AVAILABLE);
           TicketBookingViewClient.removeSelectedSeat(Seat.this);
         }
+        setBorder(border);
         revalidate();
         repaint();
       }

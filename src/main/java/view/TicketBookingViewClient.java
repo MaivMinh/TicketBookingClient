@@ -45,6 +45,11 @@ public class TicketBookingViewClient extends JFrame {
   private static Client client;
   private static DefaultTableModel selectedSeatModel;
   private static JTable selectedSeatTable;
+  private static JLabel totalFee = new JLabel("0");
+  private static JLabel remainFee = new JLabel("0");
+  private static double total = 0;
+  private static double remain = 0;
+  private static final JComboBox voucherComboBox = new JComboBox<>(new String[]{"5%", "50K"});
 
   public TicketBookingViewClient() {
     setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -146,7 +151,6 @@ public class TicketBookingViewClient extends JFrame {
     selectedSeatModel.addColumn("Vị Trí");
     selectedSeatModel.addColumn("Hạng Ghế");
     selectedSeatModel.addColumn("Giá Ghế");
-    selectedSeatModel.addRow(new Object[]{1,"CGV", "H10", "VIP", 80000});
     selectedSeatTable = new JTable(selectedSeatModel);
     selectedSeatTable.setName("selected-seat");
     selectedSeatTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -173,7 +177,7 @@ public class TicketBookingViewClient extends JFrame {
     _gbc.gridx = 1;
     _gbc.gridy = 0;
     _gbc.gridwidth = 3;
-    rightBookingSeat.add(new JLabel("580000"), _gbc);
+    rightBookingSeat.add(totalFee, _gbc);
 
     _gbc.gridx = 0;
     _gbc.gridy = 1;
@@ -182,7 +186,9 @@ public class TicketBookingViewClient extends JFrame {
     _gbc.gridx = 1;
     _gbc.gridy = 1;
     _gbc.gridwidth = 3;
-    rightBookingSeat.add(new JComboBox<>(new String[]{"5%", "100K"}), _gbc);
+    rightBookingSeat.add(voucherComboBox, _gbc);
+    voucherComboBox.addActionListener(service);
+    voucherComboBox.setName("voucher");
 
     _gbc.gridx = 0;
     _gbc.gridy = 2;
@@ -191,7 +197,7 @@ public class TicketBookingViewClient extends JFrame {
     _gbc.gridx = 1;
     _gbc.gridy = 2;
     _gbc.gridwidth = 3;
-    rightBookingSeat.add(new JLabel("480000"), _gbc);
+    rightBookingSeat.add(remainFee, _gbc);
 
     _gbc.gridx = 0;
     _gbc.gridy = 3;
@@ -329,18 +335,106 @@ public class TicketBookingViewClient extends JFrame {
     client.add(submit);
   }
 
+  public static void calculateTicketPrice(String voucher) {
+    total = Double.parseDouble(totalFee.getText());
+    remain = Double.parseDouble(remainFee.getText());
+
+    switch (voucher) {
+      case "5%": {
+        remain = (int) (total * 0.95);
+        break;
+      }
+      case "50K": {
+        remain = total - 50;
+        break;
+      }
+      default: {
+        showError(null, "Unknown Voucher!");
+        break;
+      }
+    }
+    remainFee.setText(String.valueOf(remain));
+  }
+
   public static void showSelectedSeat(Seat seat) {
     // Hàm giúp hiển thị ghế vừa chọn vào bảng.
+    String seatPosition = seat.detectCharacter(seat.getRow()) + "" + seat.getCol();
     for (int i = 0; i < selectedSeatModel.getRowCount(); i++) {
-      for (int j = 0; j < selectedSeatModel.getColumnCount(); j++) {
+      Integer idMovie = (Integer) selectedSeatModel.getValueAt(i, 0);
+      String areaName = (String) selectedSeatModel.getValueAt(i, 1);
+      String position = (String) selectedSeatModel.getValueAt(i, 2);
+      if (seat.getIdMovie() == idMovie && seat.getAreaName().equals(areaName) && seatPosition.equals(position))
+        return;
+    }
+    selectedSeatModel.addRow(new Object[]{seat.getIdMovie(), seat.getAreaName(), seatPosition, seat.getType(), seat.getPrice()});
 
+    // Sau khi thêm vào bảng xong thì tính toán lại tổng tiền.
+    total += seat.getPrice();
+    String data = (String) voucherComboBox.getSelectedItem();
+    switch (data) {
+      case "5%": {
+        remain = (int) (total * 0.95);
+        break;
+      }
+      case "50K": {
+        remain = total - 50;
+        break;
       }
     }
 
+    // Cập nhật lại cho JLabel.
+    totalFee.setText(String.valueOf(total));
+    remainFee.setText(String.valueOf(remain));
   }
 
   public static void removeSelectedSeat(Seat seat) {
     // Hàm giúp xoá đi ghế vừa huỷ chọn ra khỏi bảng.
+    String seatPosition = seat.detectCharacter(seat.getRow()) + "" + seat.getCol();
+    for (int i = 0; i < selectedSeatModel.getRowCount(); i++) {
+      Integer idMovie = (Integer) selectedSeatModel.getValueAt(i, 0);
+      String areaName = (String) selectedSeatModel.getValueAt(i, 1);
+      String position = (String) selectedSeatModel.getValueAt(i, 2);
+      if (seat.getIdMovie() == idMovie && seat.getAreaName().equals(areaName) && seatPosition.equals(position)) {
+        selectedSeatModel.removeRow(i);
+
+        // Sau khi xoá xong thì giảm số tiền.
+        total -= seat.getPrice();
+        String data = (String) voucherComboBox.getSelectedItem();
+        switch (data) {
+          case "5%": {
+            remain = (int) (total * 0.95);
+            break;
+          }
+          case "50K": {
+            remain = total - 50;
+            break;
+          }
+        }
+        // Cập nhật lại cho JLabel.
+        totalFee.setText(String.valueOf(total));
+        remainFee.setText(String.valueOf(remain));
+        return;
+      }
+    }
+  }
+
+  public static DefaultTableModel getSelectedSeatModel() {
+    return selectedSeatModel;
+  }
+
+  public static void setSelectedSeatModel(DefaultTableModel selectedSeatModel) {
+    TicketBookingViewClient.selectedSeatModel = selectedSeatModel;
+  }
+
+  public static boolean checkIsSelectedSeat(int _idMovie, String _areaName, String _position) {
+    for (int i = 0; i < selectedSeatModel.getRowCount(); i++) {
+      Integer idMovie = (Integer) selectedSeatModel.getValueAt(i, 0);
+      String areaName = (String) selectedSeatModel.getValueAt(i, 1);
+      String position = (String) selectedSeatModel.getValueAt(i, 2);
+      if (idMovie == _idMovie && areaName.equals(_areaName) && position.equals(_position))
+        return true;
+    }
+    return false;
   }
 
   public static void generateCinemaPanel(List<Area> areas) {
@@ -476,6 +570,13 @@ public class TicketBookingViewClient extends JFrame {
 
   public static void showMovieTable(Movie movie) {
     // Phương thức hiển thị danh sách phim đã thêm gồm: STT, Ngày chiếu và tên phim.
+    // Kiểm tra xem id phim đã tồn tại hay chưa.
+    for (int i = 0; i < model.getRowCount(); i++) {
+      Integer idMovie = (Integer) model.getValueAt(i, 1);
+      if (idMovie == movie.getMovieId())
+        return;
+    }
+    // Nếu id phim chưa tồn tại thì thêm phim này vào.
     model.addRow(new Object[]{listMovieTable.getRowCount() + 1, movie.getMovieId(), movie.getTitle(), ConverDateToString.convertDateToString(movie.getReleaseDate())});
     listMovieTable.revalidate();
     listMovieTable.repaint();

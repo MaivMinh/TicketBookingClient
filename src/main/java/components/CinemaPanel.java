@@ -2,8 +2,10 @@ package components;
 
 import config.FONT;
 import model.Area;
+import view.TicketBookingViewClient;
 
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 
 public class CinemaPanel extends JPanel {
@@ -32,7 +34,6 @@ public class CinemaPanel extends JPanel {
 
     this.regularPrice = _regularPrice;
     this.vipPrice = _vipPrice;
-
     int row = area.getRow();
     int col = area.getColumn();
 
@@ -64,7 +65,5 @@ public class CinemaPanel extends JPanel {
     seatInfoPanel.add(_regular);
     seatInfoPanel.add(_selected);
     add(seatInfoPanel, BorderLayout.SOUTH);
-
-
   }
 }
