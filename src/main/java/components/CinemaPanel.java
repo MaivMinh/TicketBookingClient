@@ -41,18 +41,18 @@ public class CinemaPanel extends JPanel {
     for (int i = 1; i <= row; i++) {
       for (int j = 1; j <= col; j++) {
         if ((row / 4 < i && i <= row * 3 / 4 + 1) && (col / 4 < j && j <= col * 3 / 4 + 1)) {
-          seatsPanel.add(SeatFactory.generateSeat(Seat.TYPE.VIP, i, j, vipPrice));
-        } else seatsPanel.add(SeatFactory.generateSeat(Seat.TYPE.REGULAR, i, j, regularPrice));
+          seatsPanel.add(SeatFactory.generateSeat(area.getIdMovie(), this._name, Seat.TYPE.VIP, i, j, vipPrice));
+        } else seatsPanel.add(SeatFactory.generateSeat(area.getIdMovie(), this._name, Seat.TYPE.REGULAR, i, j, regularPrice));
       }
     }
     add(seatsPanel, BorderLayout.CENTER);
 
     // TẠO CHÚ THÍCH PHẦN GHẾ NGỒI SAU ĐÓ THÊM VÀO CINEMA PANEL.
     JPanel seatInfoPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 30));
-    Seat booked = SeatFactory.generateSeat(Seat.STATUS.BOOKED, 0, 0, 0);
-    Seat vip = SeatFactory.generateSeat(Seat.TYPE.VIP, 0, 0, 0);
-    Seat regular = SeatFactory.generateSeat(Seat.TYPE.REGULAR, 0, 0, 0);
-    Seat selected = SeatFactory.generateSeat(Seat.STATUS.SELECTED, 0, 0, 0);
+    Seat booked = SeatFactory.generateSeat(area.getIdMovie(), this._name, Seat.STATUS.BOOKED, 0, 0, 0);
+    Seat vip = SeatFactory.generateSeat(area.getIdMovie(), this._name, Seat.TYPE.VIP, 0, 0, 0);
+    Seat regular = SeatFactory.generateSeat(area.getIdMovie(), this._name, Seat.TYPE.REGULAR, 0, 0, 0);
+    Seat selected = SeatFactory.generateSeat(area.getIdMovie(), this._name, Seat.STATUS.SELECTED, 0, 0, 0);
 
     SeatInfo _booked = new SeatInfo(booked, "Đã đặt");
     SeatInfo _vip = new SeatInfo(vip, "Ghế VIP");

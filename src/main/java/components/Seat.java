@@ -2,6 +2,7 @@ package components;
 
 import config.COLOR;
 import config.FONT;
+import view.TicketBookingViewClient;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -12,8 +13,11 @@ import java.awt.event.MouseEvent;
 
 public class Seat extends JPanel {
   enum TYPE {REGULAR, VIP}
+
   enum STATUS {AVAILABLE, SELECTED, BOOKED}
 
+  private int idMovie;
+  private String areaName; // TÊN RẠP.
   private TYPE type;
   private STATUS status;
   private boolean selected = false;
@@ -21,7 +25,9 @@ public class Seat extends JPanel {
   private int col;
   private double price;
 
-  public Seat(TYPE type, int _row, int _col, double _price) {
+  public Seat(int idMovie, String areaName, TYPE type, int _row, int _col, double _price) {
+    this.idMovie = idMovie;
+    this.areaName = areaName;
     this.type = type;
     this.status = STATUS.AVAILABLE;
     this.row = _row;
@@ -33,24 +39,47 @@ public class Seat extends JPanel {
     addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent e) {
+        System.out.println(idMovie + " - " + areaName + " - " + detectCharacter(row) + col + " - " + price);
         if (status == STATUS.BOOKED)
           return;
-        else selected = !selected;
-        setStatus(selected ? STATUS.SELECTED : STATUS.AVAILABLE);
-        Border border = (selected ? new RoundedBorder(new Color(255, 255, 128), 2, 20,20) : null);
-        setBorder(border);
-        repaint(); // Yêu cầu vẽ lại thành phần
+        selected = !selected;
+        Border border = null;
+        if (selected) {
+          // Người dùng chọn ghế.
+          setStatus(STATUS.SELECTED);
+          border = new RoundedBorder(new Color(255, 255, 128), 2, 20, 20);
+          setBorder(border);
+          // Gọi hàm hiển thị ghế vào bảng.
+          TicketBookingViewClient.showSelectedSeat(Seat.this);
+        } else {
+          // Người dùng huỷ chọn ghế.
+          setStatus(STATUS.AVAILABLE);
+          TicketBookingViewClient.removeSelectedSeat(Seat.this);
+        }
+        revalidate();
+        repaint();
       }
     });
   }
 
-  public Seat(STATUS status, int _row, int _col, double _price) {
+  public Seat(int idMovie, String areaName, STATUS status, int _row, int _col, double _price){
+    this.idMovie = idMovie;
+    this.areaName = areaName;
     this.status = status;
+    this.type = TYPE.REGULAR;
     this.row = _row;
     this.col = _col;
     this.price = _price;
     setPreferredSize(new Dimension(20, 20));
     this.setCursor(new Cursor(Cursor.HAND_CURSOR));
+  }
+
+  public String getAreaName() {
+    return areaName;
+  }
+
+  public void setAreaName(String areaName) {
+    this.areaName = areaName;
   }
 
   public void setType(TYPE type) {
@@ -99,6 +128,14 @@ public class Seat extends JPanel {
 
   public void setPrice(double price) {
     this.price = price;
+  }
+
+  public int getIdMovie() {
+    return idMovie;
+  }
+
+  public void setIdMovie(int idMovie) {
+    this.idMovie = idMovie;
   }
 
   public char detectCharacter(int value) {

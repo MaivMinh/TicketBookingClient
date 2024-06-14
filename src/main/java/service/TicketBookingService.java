@@ -19,7 +19,7 @@ import java.util.List;
 
 public class TicketBookingService implements ActionListener, MouseListener {
 
-  private final TicketBookingRepo repo = new TicketBookingRepo();
+  private static final TicketBookingRepo repo = new TicketBookingRepo();
 
   @Override
   public void actionPerformed(ActionEvent e) {
@@ -83,15 +83,23 @@ public class TicketBookingService implements ActionListener, MouseListener {
   public void mouseClicked(MouseEvent e) {
     Object source = e.getSource();
     if (source instanceof JTable table) {
-      int row = table.getSelectedRow();
-      int stt = Integer.parseInt(table.getValueAt(row, 0).toString());
-      int movieId = Integer.parseInt(table.getValueAt(row, 1).toString());
-      String title = table.getValueAt(row, 2).toString();
-      String releaseDate = table.getValueAt(row, 3).toString();
+      if (table.getName().equals("list-movie")) {
+        int row = table.getSelectedRow();
+        int stt = Integer.parseInt(table.getValueAt(row, 0).toString());
+        int movieId = Integer.parseInt(table.getValueAt(row, 1).toString());
+        String title = table.getValueAt(row, 2).toString();
+        String releaseDate = table.getValueAt(row, 3).toString();
 
-      // Từ thông tin trên, tạo lại các CinemaPanel rồi lưu lại vào centerAreasPanel.
-      TicketBookingViewClient.generateCinemaPanel(repo.getAreaByMovieId(movieId));
-
+        // Từ thông tin trên, tạo lại các CinemaPanel rồi lưu lại vào centerAreasPanel.
+        List<Area> areas = repo.getAreaByMovieId(movieId);
+        if (areas != null)
+          TicketBookingViewClient.generateCinemaPanel(areas);
+        else {
+          TicketBookingViewClient.showError(null, "No area for this movie");
+        }
+      } else {
+        // Dùng cho tabel ở dưới.
+      }
     }
   }
 

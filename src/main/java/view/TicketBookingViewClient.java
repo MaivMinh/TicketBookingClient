@@ -3,6 +3,7 @@ package view;
 import client.Client;
 import components.AreaForm;
 import components.CinemaPanel;
+import components.Seat;
 import config.FONT;
 import model.Area;
 import model.Movie;
@@ -19,9 +20,6 @@ import javax.swing.text.StyledDocument;
 import java.awt.*;
 import java.io.IOException;
 import java.net.Socket;
-import java.net.UnknownHostException;
-import java.util.Arrays;
-import java.util.Date;
 import java.util.List;
 
 public class TicketBookingViewClient extends JFrame {
@@ -33,7 +31,7 @@ public class TicketBookingViewClient extends JFrame {
   private static final TicketBookingService service = new TicketBookingService();
   private static final JTextField nameField = new JTextField(30);
   ;
-  private static JTable table;
+  private static JTable listMovieTable;
   private static final JTextField customerNameField = new JTextField(20);
   private static final JTextField phoneNumberField = new JTextField(20);
   private static final JTextField emailField = new JTextField(20);
@@ -45,6 +43,8 @@ public class TicketBookingViewClient extends JFrame {
   public static final JTextField addressField = new JTextField(20);
   private static final JTextField content = new JTextField(20);
   private static Client client;
+  private static DefaultTableModel selectedSeatModel;
+  private static JTable selectedSeatTable;
 
   public TicketBookingViewClient() {
     setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -119,14 +119,15 @@ public class TicketBookingViewClient extends JFrame {
     model.addColumn("Mã phim");
     model.addColumn("Tên phim");
     model.addColumn("Ngày chiếu");
-    table = new JTable(model);
-    JScrollPane tableScrollPane = new JScrollPane(table);
+    listMovieTable = new JTable(model);
+    listMovieTable.setName("list-movie");
+    JScrollPane tableScrollPane = new JScrollPane(listMovieTable);
     tableScrollPane.setSize(new Dimension(600, 250));
     tableScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-    table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    table.setPreferredScrollableViewportSize(new Dimension(600, 250));
-    table.setName("list-movie");
-    table.addMouseListener(service);
+    listMovieTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    listMovieTable.setPreferredScrollableViewportSize(new Dimension(600, 250));
+    listMovieTable.setName("list-movie");
+    listMovieTable.addMouseListener(service);
     listMovieAdded.add(tableScrollPane);
 
     // Tiếp theo sẽ tạo JPanel phía dưới chứa thông tin ghế đã lựa chọn, chi phí.
@@ -139,12 +140,15 @@ public class TicketBookingViewClient extends JFrame {
     leftBookingSeat.setPreferredSize(new Dimension(300, 200));
     leftBookingSeat.add(new JLabel("Danh sách đã chọn"));
 
-    DefaultTableModel selectedModel = new DefaultTableModel();
-    selectedModel.addColumn("Tên Rạp");
-    selectedModel.addColumn("Vị trí");
-    selectedModel.addColumn("Hạng ghế");
-    selectedModel.addColumn("Giá ghế");
-    JTable selectedSeatTable = new JTable(selectedModel);
+    selectedSeatModel = new DefaultTableModel();
+    selectedSeatModel.addColumn("Mã Phim");
+    selectedSeatModel.addColumn("Tên Rạp");
+    selectedSeatModel.addColumn("Vị Trí");
+    selectedSeatModel.addColumn("Hạng Ghế");
+    selectedSeatModel.addColumn("Giá Ghế");
+    selectedSeatModel.addRow(new Object[]{1,"CGV", "H10", "VIP", 80000});
+    selectedSeatTable = new JTable(selectedSeatModel);
+    selectedSeatTable.setName("selected-seat");
     selectedSeatTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     selectedSeatTable.setPreferredScrollableViewportSize(new Dimension(300, 150));
     selectedSeatTable.addMouseListener(service);
@@ -325,6 +329,19 @@ public class TicketBookingViewClient extends JFrame {
     client.add(submit);
   }
 
+  public static void showSelectedSeat(Seat seat) {
+    // Hàm giúp hiển thị ghế vừa chọn vào bảng.
+    for (int i = 0; i < selectedSeatModel.getRowCount(); i++) {
+      for (int j = 0; j < selectedSeatModel.getColumnCount(); j++) {
+
+      }
+    }
+
+  }
+
+  public static void removeSelectedSeat(Seat seat) {
+    // Hàm giúp xoá đi ghế vừa huỷ chọn ra khỏi bảng.
+  }
 
   public static void generateCinemaPanel(List<Area> areas) {
     cinemaPanel.removeAll();
@@ -459,9 +476,9 @@ public class TicketBookingViewClient extends JFrame {
 
   public static void showMovieTable(Movie movie) {
     // Phương thức hiển thị danh sách phim đã thêm gồm: STT, Ngày chiếu và tên phim.
-    model.addRow(new Object[]{table.getRowCount() + 1, movie.getMovieId(), movie.getTitle(), ConverDateToString.convertDateToString(movie.getReleaseDate())});
-    table.revalidate();
-    table.repaint();
+    model.addRow(new Object[]{listMovieTable.getRowCount() + 1, movie.getMovieId(), movie.getTitle(), ConverDateToString.convertDateToString(movie.getReleaseDate())});
+    listMovieTable.revalidate();
+    listMovieTable.repaint();
   }
 
 

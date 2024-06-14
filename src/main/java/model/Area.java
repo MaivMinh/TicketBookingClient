@@ -14,6 +14,7 @@ public class Area implements Serializable {
   private int column;
   private int regularPrice;
   private int vipPrice;
+  private int idMovie;
   private CopyOnWriteArraySet<Pair> booked;  // Lưu các vị trí ngồi đã được đặt của rạp tương ứng.
 
   public Area() {
@@ -91,6 +92,14 @@ public class Area implements Serializable {
 
   public void removingSeat(int row, int col) {
     booked.remove(new Pair(row, col));
+  }
+
+  public int getIdMovie() {
+    return idMovie;
+  }
+
+  public void setIdMovie(int idMovie) {
+    this.idMovie = idMovie;
   }
 
   @Override
