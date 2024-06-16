@@ -1,10 +1,12 @@
 package client;
 
-import model.BookingInfo;
-import model.Movie;
+import model.*;
+import repository.SeatBookedRepo;
+import repository.SeatSelectedRepo;
 import repository.TicketBookingRepo;
 import view.TicketBookingViewClient;
 
+import java.awt.event.ActionListener;
 import java.io.*;
 import java.net.Socket;
 import java.util.List;
@@ -33,7 +35,7 @@ public class Client implements Runnable {
         oos.writeObject(infor);
         oos.flush();
       }
-    } catch (IOException e)  {
+    } catch (IOException e) {
       System.out.println(e.getMessage() + " - Client.sendDataToServer()");
       closeAll();
     }
@@ -64,12 +66,16 @@ public class Client implements Runnable {
       public void run() {
         // HÀM NÀY CHỊU TRÁCH NHIỆM CHO VIỆC ĐỌC DỮ LIỆU TỪ SERVER GỬI VỀ.
         try {
-          // Ở thời điểm ban đầu vừa kết nối, Server sẽ gửi danh sách các Movie đã thêm trước đó sang cho Client mới này.
-          List<Object> list = (List<Object>) ois.readObject();
-          for (Object object : list) {
-            if (object instanceof Movie movie) {
+          Object result = ois.readObject();
+          if (result instanceof MoviesAndBookedSeat data) {
+            List<Movie> movies = data.getMovies();
+            List<SeatBooked> seats = data.getSeats();
+            for (Movie movie : movies) {
               TicketBookingRepo.addMovie(movie);
               TicketBookingViewClient.showMovieTable(movie);
+            }
+            for (SeatBooked seat : seats) {
+              SeatBookedRepo.addBookedSeat(seat);
             }
           }
 
@@ -79,6 +85,23 @@ public class Client implements Runnable {
               // Sau khi mà có được movie rồi thì cần phải thêm vào repo.
               TicketBookingRepo.addMovie(movie);
               TicketBookingViewClient.showMovieTable(movie);
+            } else if (data instanceof Boolean isBooked) {
+              // Một hoặc toàn bộ ghế ngồi không thể đặt được.
+              if (isBooked) {
+                TicketBookingViewClient.showSuccess(null, "Đặt ghế thành công!");
+                TicketBookingViewClient.repaintSeatBooked();
+                TicketBookingViewClient.repaintSelectedSeatTable();
+              } else {
+                TicketBookingViewClient.showSuccess(null, "Đặt ghế thất bại! Có thể ghế đã được đặt!");
+                SeatSelectedRepo.removeLast(); // Xóa ghế đã chọn khỏi danh sách.
+              }
+            } else if (data instanceof BookingInfo info) {
+              String clientName = info.getClientName();
+              String phoneNumber = info.getClientPhoneNumber();
+              String email = info.getEmail();
+              List<SeatSelected> list = info.getSeatSelectedList(); // Danh sách chứa các ghế đã đặt.
+              SeatSelectedRepo.add(list); // Thêm vào repo.
+              TicketBookingViewClient.repaintSeatBooked();
             }
           }
         } catch (IOException | ClassNotFoundException exception) {
@@ -87,7 +110,6 @@ public class Client implements Runnable {
       }
     }).start();
   }
-
 
   @Override
   public void run() {

@@ -2,11 +2,13 @@ package service;
 
 import client.Client;
 import components.AreaForm;
+import components.Seat;
 import components.TimePicker;
 import model.Area;
 import model.BookingInfo;
 import model.Movie;
 import model.SeatSelected;
+import repository.SeatSelectedRepo;
 import repository.TicketBookingRepo;
 import view.TicketBookingViewClient;
 
@@ -70,6 +72,7 @@ public class TicketBookingService implements ActionListener, MouseListener {
             list.add(seat);
           }
           BookingInfo infor = new BookingInfo(clientName, clientPhoneNumber, clientEmail, list);
+          SeatSelectedRepo.add(list);
           TicketBookingViewClient.sendDataToServer(infor);
           break;
         }
@@ -121,10 +124,10 @@ public class TicketBookingService implements ActionListener, MouseListener {
         String title = table.getValueAt(row, 2).toString();
         String releaseDate = table.getValueAt(row, 3).toString();
 
-        // Từ thông tin trên, tạo lại các CinemaPanel rồi lưu lại vào centerAreasPanel.
+        // Từ thông tin trên, tạo lại các CinemaArea rồi lưu lại vào centerAreasPanel.
         List<Area> areas = repo.getAreaByMovieId(movieId);
         if (areas != null)
-          TicketBookingViewClient.generateCinemaPanel(areas);
+          TicketBookingViewClient.generateCinemaPanel(movieId, areas);
         else {
           TicketBookingViewClient.showError(null, "No area for this movie");
         }

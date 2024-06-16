@@ -2,18 +2,21 @@ package components;
 
 import config.FONT;
 import model.Area;
-import view.TicketBookingViewClient;
 
 import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 
-public class CinemaPanel extends JPanel {
+public class CinemaArea extends JPanel {
+  private final JPanel seatsPanel;
+  private Integer idMovie;
   private final String _name;
   private double regularPrice;
   private double vipPrice;
+  private Area area;
 
-  public CinemaPanel(Area area, double _regularPrice, double _vipPrice) {
+  public CinemaArea(Integer idMovie, Area area, double _regularPrice, double _vipPrice) {
+    this.area = area;
+    this.idMovie = idMovie;
     setLayout(new BorderLayout(0, 0));
     setPreferredSize(new Dimension(600, 500));
     this._name = area.getName();
@@ -38,12 +41,12 @@ public class CinemaPanel extends JPanel {
     int col = area.getColumn();
 
     // TẠO DANH SÁCH GHẾ NGỒI SAU ĐÓ THÊM VÀO CINEMA PANEL.
-    JPanel seatsPanel = new JPanel(new GridLayout(row, col, 6, 6));
+    seatsPanel = new JPanel(new GridLayout(row, col, 6, 6));
     for (int i = 1; i <= row; i++) {
       for (int j = 1; j <= col; j++) {
         if ((row / 4 < i && i <= row * 3 / 4 + 1) && (col / 4 < j && j <= col * 3 / 4 + 1)) {
-          seatsPanel.add(SeatFactory.generateSeat(area.getIdMovie(), this._name, Seat.TYPE.VIP, i, j, vipPrice));
-        } else seatsPanel.add(SeatFactory.generateSeat(area.getIdMovie(), this._name, Seat.TYPE.REGULAR, i, j, regularPrice));
+          seatsPanel.add(SeatFactory.generateSeat(area.getIdMovie(), this._name, Seat.TYPE.VIP, i, j, vipPrice), ((i-1)*col + (j-1)));
+        } else seatsPanel.add(SeatFactory.generateSeat(area.getIdMovie(), this._name, Seat.TYPE.REGULAR, i, j, regularPrice), ((i - 1)*col + (j - 1)));
       }
     }
     add(seatsPanel, BorderLayout.CENTER);
@@ -66,4 +69,26 @@ public class CinemaPanel extends JPanel {
     seatInfoPanel.add(_selected);
     add(seatInfoPanel, BorderLayout.SOUTH);
   }
+
+  public String get_name() {
+    return _name;
+  }
+
+  public Integer getIdMovie() {
+    return idMovie;
+  }
+
+  public Area getArea() {
+    return area;
+  }
+
+  public void repaintSeatAt(int colArea, String position) {
+    char  row = position.charAt(0);
+    String col = position.substring(1);
+    int _row = row - 64;
+    int _col = Integer.parseInt(col);
+    Seat seat = (Seat)seatsPanel.getComponent((_row -1) * colArea + (_col -1));
+    seat.setStatus(Seat.STATUS.BOOKED);
+  }
+
 }

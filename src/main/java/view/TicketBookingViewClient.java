@@ -2,12 +2,13 @@ package view;
 
 import client.Client;
 import components.AreaForm;
-import components.CinemaPanel;
+import components.CinemaArea;
 import components.Seat;
 import config.FONT;
-import model.Area;
-import model.BookingInfo;
-import model.Movie;
+import model.*;
+import repository.CinemaAreaRepo;
+import repository.SeatBookedRepo;
+import repository.SeatSelectedRepo;
 import service.TicketBookingService;
 import utils.ConverDateToString;
 
@@ -214,7 +215,7 @@ public class TicketBookingViewClient extends JFrame {
     listMovieAddedAndBookingSeat.add(bookingSeat);
 
 
-    // Panel phía bên phải bao gồm một CinemaPanel và bên dưới bao gồm thông tin các loại ghế ngồi và trạng thái.
+    // Panel phía bên phải bao gồm một CinemaArea và bên dưới bao gồm thông tin các loại ghế ngồi và trạng thái.
     cinemaPanel = new JPanel(new FlowLayout(FlowLayout.LEADING, 50, 10));
     cinemaPanel.setSize(new Dimension(700, 500));
     JScrollPane cinemaScrollPane = new JScrollPane(cinemaPanel);
@@ -442,10 +443,12 @@ public class TicketBookingViewClient extends JFrame {
     return false;
   }
 
-  public static void generateCinemaPanel(List<Area> areas) {
+  public static void generateCinemaPanel(Integer idMovie, List<Area> areas) {
     cinemaPanel.removeAll();
     for (Area area : areas) {
-      cinemaPanel.add(new CinemaPanel(area, area.getRegularPrice(), area.getVipPrice()));
+      CinemaArea cinemaArea = new CinemaArea(idMovie, area, area.getRegularPrice(), area.getVipPrice());
+      CinemaAreaRepo.add(cinemaArea);
+      cinemaPanel.add(cinemaArea);
     }
     cinemaPanel.revalidate();
     cinemaPanel.repaint();
@@ -619,6 +622,24 @@ public class TicketBookingViewClient extends JFrame {
     } catch (RuntimeException | IOException e) {
       showError(null, e.getMessage());
       System.out.println(e.getMessage() + " - TicketBookingClient.startClient()");
+    }
+  }
+
+  public static void repaintSelectedSeatTable() {
+    selectedSeatModel.setRowCount(0);
+  }
+
+  public static void repaintSeatBooked() {
+    // HÀM TẠO LẠI GHẾ ĐƯỢC ĐẶT THÀNH CÔNG.
+    // Lấy danh sách các ghế ngồi đã được đặt trước đó.
+    List<SeatSelected> seats = SeatSelectedRepo.getLast();
+
+    SeatSelected booked = seats.getFirst();
+    CinemaArea cinemaArea = CinemaAreaRepo.getCinemaAreaByIdMovieAndAreaName(booked.getIdMovie(), booked.getAreaName());
+    for (SeatSelected seat: seats) {
+      SeatBooked seatBooked = new SeatBooked(seat.getIdMovie(), seat.getAreaName(), seat.getPosition());
+      SeatBookedRepo.addBookedSeat(seatBooked);
+      cinemaArea.repaintSeatAt(cinemaArea.getArea().getColumn(), seat.getPosition());
     }
   }
 

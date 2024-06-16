@@ -19,7 +19,7 @@ public class TicketBookingRepo {
   }
 
 
-  public List<Movie> getMovies() {
+  public static List<Movie> getMovies() {
     return movies.stream().toList();
   }
 

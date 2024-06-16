@@ -19,6 +19,22 @@ public class BookingInfo implements Serializable {
     this.seatSelectedList = seatSelectedList;
   }
 
+  public String getClientName() {
+    return clientName;
+  }
+
+  public String getClientPhoneNumber() {
+    return clientPhoneNumber;
+  }
+
+  public String getEmail() {
+    return email;
+  }
+
+  public List<SeatSelected> getSeatSelectedList() {
+    return seatSelectedList;
+  }
+
   @Override
   public String toString() {
     return "BookingInfo{" +

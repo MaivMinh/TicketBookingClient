@@ -2,6 +2,7 @@ package components;
 
 import config.COLOR;
 import config.FONT;
+import repository.SeatBookedRepo;
 import view.TicketBookingViewClient;
 
 import javax.swing.*;
@@ -31,9 +32,14 @@ public class Seat extends JPanel {
     this.type = type;
     this.row = _row;
     this.col = _col;
-    this.status = (TicketBookingViewClient.checkIsSelectedSeat(idMovie, areaName, detectCharacter(row) +"" + col) ? STATUS.SELECTED : STATUS.AVAILABLE);
-    if (status == STATUS.SELECTED)  {
-      setBorder(new RoundedBorder(new Color(255, 255, 128), 2, 20, 20));
+    boolean isBooked = SeatBookedRepo.isBooked(idMovie, areaName, detectCharacter(row) + "" + col);
+    if (isBooked) {
+      this.status = STATUS.BOOKED;
+    } else {
+      this.status = (TicketBookingViewClient.checkIsSelectedSeat(idMovie, areaName, detectCharacter(row) + "" + col) ? STATUS.SELECTED : STATUS.AVAILABLE);
+      if (status == STATUS.SELECTED) {
+        setBorder(new RoundedBorder(new Color(255, 255, 128), 2, 20, 20));
+      }
     }
     this.price = _price;
     setPreferredSize(new Dimension(20, 20));
@@ -62,7 +68,7 @@ public class Seat extends JPanel {
     });
   }
 
-  public Seat(int idMovie, String areaName, STATUS status, int _row, int _col, double _price){
+  public Seat(int idMovie, String areaName, STATUS status, int _row, int _col, double _price) {
     this.idMovie = idMovie;
     this.areaName = areaName;
     this.status = status;
@@ -88,6 +94,8 @@ public class Seat extends JPanel {
 
   public void setStatus(STATUS status) {
     this.status = status;
+    revalidate();
+    repaint();
   }
 
   public boolean isSelected() {
