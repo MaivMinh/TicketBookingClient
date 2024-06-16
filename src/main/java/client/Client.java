@@ -31,7 +31,7 @@ public class Client implements Runnable {
   public void sendDataToServer(BookingInfo infor) {
     // HÀM NÀY CHỊU TRÁCH NHIỆM CHO VIỆC GỬI DỮ LIỆU CHO SERVER.
     try {
-      if (!clientSocket.isClosed() && oos != null) {
+      if (!clientSocket.isClosed()) {
         oos.writeObject(infor);
         oos.flush();
       }
